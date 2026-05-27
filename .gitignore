@@ -1,0 +1,7 @@
+.downloads/
+.tools/
+.gradle/
+build/
+app/build/
+local.properties
+clock-preview.png
