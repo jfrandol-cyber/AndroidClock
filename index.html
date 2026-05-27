@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clock</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #131a2d;
+      --panel-light: #1e2841;
+      --text: #f3f7ff;
+      --muted: #9fb0ca;
+      --accent: #3dd6c6;
+      --accent-warm: #ffbf5e;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top left, rgba(61, 214, 198, 0.22), transparent 34rem),
+        linear-gradient(135deg, #080b15 0%, var(--bg) 42%, #121828 100%);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    main {
+      width: min(94vw, 1080px);
+      display: grid;
+      grid-template-columns: minmax(520px, 1fr) minmax(300px, 360px);
+      gap: 42px;
+      align-items: center;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(19, 26, 45, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .digital {
+      min-width: 0;
+    }
+
+    .date {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: clamp(1.1rem, 2.2vw, 1.45rem);
+      font-weight: 600;
+    }
+
+    .time {
+      position: relative;
+      margin: 0;
+      display: flex;
+      align-items: baseline;
+      flex-wrap: nowrap;
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(3.2rem, 10vw, 6.8rem);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .seconds-toggle {
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .seconds-toggle:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 6px;
+      border-radius: 6px;
+    }
+
+    .time.seconds-hidden .seconds-toggle {
+      position: absolute;
+      width: 1.65em;
+      opacity: 0;
+    }
+
+    .period {
+      margin-left: 10px;
+      color: var(--accent-warm);
+      font-size: clamp(1.2rem, 3vw, 2rem);
+    }
+
+    .timezone {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .clock {
+      position: relative;
+      width: min(74vw, 340px);
+      aspect-ratio: 1;
+      margin-inline: auto;
+      justify-self: end;
+      border: 10px solid #24304e;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, #202a45 0 6px, transparent 7px),
+        radial-gradient(circle at 50% 50%, #172038 0%, #12182a 72%, #0d1324 100%);
+      box-shadow:
+        inset 0 0 0 2px rgba(255, 255, 255, 0.08),
+        inset 0 0 34px rgba(0, 0, 0, 0.35),
+        0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+
+    .tick {
+      position: absolute;
+      inset: 10px;
+      transform: rotate(var(--angle));
+    }
+
+    .tick::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 3px;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(243, 247, 255, 0.42);
+      transform: translateX(-50%);
+    }
+
+    .tick.major::before {
+      width: 5px;
+      height: 15px;
+      background: rgba(243, 247, 255, 0.82);
+    }
+
+    .number {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      font-size: 1.08rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      transform:
+        translate(-50%, -50%)
+        rotate(var(--angle))
+        translateY(-123px)
+        rotate(calc(var(--angle) * -1));
+    }
+
+    .hand {
+      position: absolute;
+      left: 50%;
+      bottom: 50%;
+      border-radius: 999px;
+      transform-origin: 50% 100%;
+      transform: translateX(-50%) rotate(var(--rotation, 0deg));
+    }
+
+    .hour-hand {
+      width: 10px;
+      height: 22%;
+      background: var(--text);
+    }
+
+    .minute-hand {
+      width: 6px;
+      height: 38%;
+      background: #d9e4f7;
+    }
+
+    .second-hand {
+      width: 3px;
+      height: 42%;
+      background: var(--accent-warm);
+    }
+
+    .pin {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      border: 4px solid var(--accent-warm);
+      border-radius: 50%;
+      background: var(--panel);
+      transform: translate(-50%, -50%);
+      z-index: 5;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        grid-template-columns: 1fr;
+        gap: 26px;
+        padding: 24px;
+        text-align: center;
+      }
+
+      .time {
+        justify-content: center;
+      }
+
+      .clock {
+        justify-self: center;
+      }
+
+      .number {
+        transform:
+          translate(-50%, -50%)
+          rotate(var(--angle))
+          translateY(calc(min(74vw, 340px) * -0.36))
+          rotate(calc(var(--angle) * -1));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main aria-label="Current date and time">
+    <section class="digital">
+      <p class="date" id="date">Loading date</p>
+      <h1 class="time" id="time" aria-live="polite">
+        <span id="hours">00</span><span>:</span><span id="minutes">00</span><span class="seconds-toggle" id="secondsToggle" role="button" tabindex="0" aria-label="Hide seconds"><span>:</span><span class="seconds" id="seconds">00</span></span><span class="period" id="period">AM</span>
+      </h1>
+      <p class="timezone" id="timezone">Local time</p>
+    </section>
+
+    <section class="clock" aria-label="Analog clock">
+      <div class="tick major" style="--angle: 0deg"></div>
+      <div class="tick" style="--angle: 30deg"></div>
+      <div class="tick" style="--angle: 60deg"></div>
+      <div class="tick major" style="--angle: 90deg"></div>
+      <div class="tick" style="--angle: 120deg"></div>
+      <div class="tick" style="--angle: 150deg"></div>
+      <div class="tick major" style="--angle: 180deg"></div>
+      <div class="tick" style="--angle: 210deg"></div>
+      <div class="tick" style="--angle: 240deg"></div>
+      <div class="tick major" style="--angle: 270deg"></div>
+      <div class="tick" style="--angle: 300deg"></div>
+      <div class="tick" style="--angle: 330deg"></div>
+
+      <div class="number" style="--angle: 0deg">12</div>
+      <div class="number" style="--angle: 30deg">1</div>
+      <div class="number" style="--angle: 60deg">2</div>
+      <div class="number" style="--angle: 90deg">3</div>
+      <div class="number" style="--angle: 120deg">4</div>
+      <div class="number" style="--angle: 150deg">5</div>
+      <div class="number" style="--angle: 180deg">6</div>
+      <div class="number" style="--angle: 210deg">7</div>
+      <div class="number" style="--angle: 240deg">8</div>
+      <div class="number" style="--angle: 270deg">9</div>
+      <div class="number" style="--angle: 300deg">10</div>
+      <div class="number" style="--angle: 330deg">11</div>
+
+      <div class="hand hour-hand" id="hourHand"></div>
+      <div class="hand minute-hand" id="minuteHand"></div>
+      <div class="hand second-hand" id="secondHand"></div>
+      <div class="pin"></div>
+    </section>
+  </main>
+
+  <script>
+    const dateEl = document.getElementById("date");
+    const timeEl = document.getElementById("time");
+    const hoursEl = document.getElementById("hours");
+    const minutesEl = document.getElementById("minutes");
+    const secondsEl = document.getElementById("seconds");
+    const secondsToggle = document.getElementById("secondsToggle");
+    const periodEl = document.getElementById("period");
+    const timezoneEl = document.getElementById("timezone");
+    const hourHand = document.getElementById("hourHand");
+    const minuteHand = document.getElementById("minuteHand");
+    const secondHand = document.getElementById("secondHand");
+
+    const dateFormatter = new Intl.DateTimeFormat(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    });
+
+    const timezoneFormatter = new Intl.DateTimeFormat(undefined, {
+      timeZoneName: "long"
+    });
+
+    function twoDigits(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const hours24 = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      const milliseconds = now.getMilliseconds();
+      const hours12 = hours24 % 12 || 12;
+      const smoothSeconds = seconds + milliseconds / 1000;
+      const smoothMinutes = minutes + smoothSeconds / 60;
+      const smoothHours = (hours24 % 12) + smoothMinutes / 60;
+
+      dateEl.textContent = dateFormatter.format(now);
+      hoursEl.textContent = twoDigits(hours12);
+      minutesEl.textContent = twoDigits(minutes);
+      secondsEl.textContent = twoDigits(seconds);
+      periodEl.textContent = hours24 >= 12 ? "PM" : "AM";
+      timezoneEl.textContent = timezoneFormatter.formatToParts(now).find((part) => part.type === "timeZoneName").value;
+
+      hourHand.style.setProperty("--rotation", `${smoothHours * 30}deg`);
+      minuteHand.style.setProperty("--rotation", `${smoothMinutes * 6}deg`);
+      secondHand.style.setProperty("--rotation", `${smoothSeconds * 6}deg`);
+
+      requestAnimationFrame(updateClock);
+    }
+
+    function toggleSeconds() {
+      const secondsHidden = timeEl.classList.toggle("seconds-hidden");
+      secondsToggle.setAttribute("aria-label", secondsHidden ? "Show seconds" : "Hide seconds");
+    }
+
+    secondsToggle.addEventListener("click", toggleSeconds);
+    secondsToggle.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleSeconds();
+      }
+    });
+
+    updateClock();
+  </script>
+</body>
+</html>
